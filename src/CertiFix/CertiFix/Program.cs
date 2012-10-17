@@ -93,11 +93,13 @@ namespace CertiFix
             var certUtils = new CertificateUtils();
 
             var myself = UserPrincipal.Current;
-            if (myself.Certificates.Count == 0)
-                return;
-
-            var lastADCert = FindLast(myself.Certificates);
-            var localEncryptionCerts = certUtils.GetEncryptionCerts(lastADCert.NotAfter);
+            DateTime notAfterDefault = DateTime.MinValue;
+            if (myself.Certificates.Count > 0)
+            {
+                var lastADCert = FindLast(myself.Certificates);
+                notAfterDefault = lastADCert.NotAfter;
+            }
+            var localEncryptionCerts = certUtils.GetEncryptionCerts(notAfterDefault);
 
             if (localEncryptionCerts.Count == 0)
                 return;
@@ -137,10 +139,14 @@ namespace CertiFix
         static X509Certificate2 FindLast(X509Certificate2Collection col)
         {
             X509Certificate2 last = null;
-            foreach (var adCert in col)
+
+            if (col != null)
             {
-                if (last == null || last.NotAfter < adCert.NotAfter)
-                    last = adCert;
+                foreach (var adCert in col)
+                {
+                    if (last == null || last.NotAfter < adCert.NotAfter)
+                        last = adCert;
+                }
             }
             return last;
         }
