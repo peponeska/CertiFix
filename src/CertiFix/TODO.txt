@@ -1,0 +1,3 @@
+-check autostart option when using ClickOnce and fix uninstall problems
+	http://www.brokenwire.net/bw/Programming/116/run-clickonce-app-on-startup
+	http://johnnycoder.com/blog/2009/02/24/clickonce-run-at-startup/
