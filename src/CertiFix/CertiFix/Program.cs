@@ -22,9 +22,21 @@ namespace CertiFix
         [STAThread]
         static void Main()
         {
+            //Error handling
+            AppDomain.CurrentDomain.UnhandledException += ErrorHandling.CurrentDomain_UnhandledException;
+            Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(ErrorHandling.Application_ThreadException);
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            Initialize();
+
+            Application.Run();
+        }
+
+        static void Initialize()
+        {
             Form f = new Form();
             f.Icon = Properties.Resources.notify;
             f.ShowIcon = true;
@@ -47,14 +59,12 @@ namespace CertiFix
                 });
 
             notifyIcon1.ContextMenuStrip = cm;
-            
+
             timer.Enabled = true; // Enable it
             timer.Start();
 
             CheckEncryptionCerts();
             CheckExpiringCertificates();
-
-            Application.Run();
         }
 
         static void CheckExpiringCertificates()
@@ -64,16 +74,7 @@ namespace CertiFix
             if (expiringCerts.Count == 0)
                 return;
 
-            var popupNotifier1 = new PopupNotifier();
-
-            popupNotifier1.Click += (o, e) => { ((PopupNotifier)o).Hide(); };
-            popupNotifier1.ShowCloseButton = false;
-            popupNotifier1.ShowOptionsButton = true;
-            popupNotifier1.ShowGrip = false;
-            popupNotifier1.Image = Properties.Resources.fire;
-            popupNotifier1.ImagePadding = new Padding(10);
-            popupNotifier1.TitlePadding = new Padding(10);
-            popupNotifier1.ContentPadding = new Padding(0);
+            var popupNotifier = Helper.PopupFactory();
 
             ContextMenuStrip ContextMenu = new System.Windows.Forms.ContextMenuStrip(new System.ComponentModel.Container());
             ContextMenu.Items.AddRange(
@@ -81,11 +82,11 @@ namespace CertiFix
                     new System.Windows.Forms.ToolStripMenuItem("Details", Properties.Resources.details, 
                         (o, e)=> X509Certificate2UI.SelectFromCollection(expiringCerts, "Expiring certificates", "Selecting certificate will do nothing.", X509SelectionFlag.MultiSelection, handle)) });
 
-            popupNotifier1.OptionsMenu = ContextMenu;
+            popupNotifier.OptionsMenu = ContextMenu;
 
-            popupNotifier1.TitleText = "Some certificates are going to expire!";
-            popupNotifier1.ContentText = String.Format("{0} certificates are going to expire in less than {1} days", expiringCerts.Count, DaysToExpire);
-            popupNotifier1.Popup();
+            popupNotifier.TitleText = "Some certificates are going to expire!";
+            popupNotifier.ContentText = String.Format("{0} certificates are going to expire in less than {1} days", expiringCerts.Count, DaysToExpire);
+            popupNotifier.Popup();
         }
 
         static void CheckEncryptionCerts()
@@ -96,7 +97,7 @@ namespace CertiFix
             DateTime notAfterDefault = DateTime.MinValue;
             if (myself.Certificates.Count > 0)
             {
-                var lastADCert = FindLast(myself.Certificates);
+                var lastADCert = myself.Certificates.FindLast();
                 notAfterDefault = lastADCert.NotAfter;
             }
             var localEncryptionCerts = certUtils.GetEncryptionCerts(notAfterDefault);
@@ -104,16 +105,7 @@ namespace CertiFix
             if (localEncryptionCerts.Count == 0)
                 return;
 
-            var popupNotifier1 = new PopupNotifier();
-
-            popupNotifier1.Click += (o, e) => { ((PopupNotifier)o).Hide(); };
-            popupNotifier1.ShowCloseButton = false;
-            popupNotifier1.ShowOptionsButton = true;
-            popupNotifier1.ShowGrip = false;
-            popupNotifier1.Image = Properties.Resources.fire;
-            popupNotifier1.ImagePadding = new Padding(10);
-            popupNotifier1.TitlePadding = new Padding(10);
-            popupNotifier1.ContentPadding = new Padding(0);
+            var popupNotifier = Helper.PopupFactory();
 
             ContextMenuStrip ContextMenu = new System.Windows.Forms.ContextMenuStrip(new System.ComponentModel.Container());
             ContextMenu.Items.AddRange(
@@ -129,26 +121,15 @@ namespace CertiFix
                             }
                         }) });
 
-            popupNotifier1.OptionsMenu = ContextMenu;
+            popupNotifier.OptionsMenu = ContextMenu;
 
-            popupNotifier1.TitleText = "Some certificates are not in AD!";
-            popupNotifier1.ContentText = String.Format("{0} certificates are not in AD. People may not be able to send you encrypted mail.", localEncryptionCerts.Count);
-            popupNotifier1.Popup();
+            popupNotifier.TitleText = "Some certificates are not in AD!";
+            popupNotifier.ContentText = String.Format("{0} certificates are not in AD. People may not be able to send you encrypted mail.", localEncryptionCerts.Count);
+            popupNotifier.Popup();
         }
 
-        static X509Certificate2 FindLast(X509Certificate2Collection col)
-        {
-            X509Certificate2 last = null;
+        
 
-            if (col != null)
-            {
-                foreach (var adCert in col)
-                {
-                    if (last == null || last.NotAfter < adCert.NotAfter)
-                        last = adCert;
-                }
-            }
-            return last;
-        }
+        
     }
 }
