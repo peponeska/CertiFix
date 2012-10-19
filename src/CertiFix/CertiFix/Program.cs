@@ -94,7 +94,7 @@ namespace CertiFix
             var certUtils = new CertificateUtils();
 
             var myself = UserPrincipal.Current;
-            DateTime notAfterDefault = DateTime.MinValue;
+            DateTime notAfterDefault = new DateTime(1900, 1, 1);
             if (myself.Certificates.Count > 0)
             {
                 var lastADCert = myself.Certificates.FindLast();
