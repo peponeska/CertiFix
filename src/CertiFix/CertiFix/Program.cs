@@ -48,7 +48,7 @@ namespace CertiFix
 
             var notifyIcon1 = new System.Windows.Forms.NotifyIcon();
             notifyIcon1.Icon = Properties.Resources.notify;
-            notifyIcon1.Text = "notifyIcon1";
+            notifyIcon1.Text = "CertiFix";
             notifyIcon1.Visible = true;
 
             var cm = new System.Windows.Forms.ContextMenuStrip(new System.ComponentModel.Container());
